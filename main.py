@@ -26,4 +26,35 @@ async def join(ctx):
     await canal.connect()
     await ctx.send(f"🔊 Entrei em {canal.name}")
 
+    import yt_dlp
+
+@bot.command()
+async def play(ctx, url):
+    if ctx.author.voice is None:
+        await ctx.send("❌ Tens de estar num canal de voz.")
+        return
+
+    if ctx.voice_client is None:
+        await ctx.author.voice.channel.connect()
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        audio_url = info['url']
+
+    source = discord.FFmpegPCMAudio(audio_url)
+    ctx.voice_client.play(source)
+
+    await ctx.send(f"🎵 A tocar: {info['title']}")
+
+    @bot.command()
+    async def leave(ctx):
+    if ctx.voice_client:
+        await ctx.voice_client.disconnect()
+        await ctx.send("👋 Saí do canal de voz.")
+
 bot.run(os.getenv("DISCORD_TOKEN"))
