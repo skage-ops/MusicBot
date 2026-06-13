@@ -14,9 +14,24 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"{bot.user} está online!")
 
+    host = os.getenv("LAVALINK_HOST")
+    port = os.getenv("LAVALINK_PORT")
+    password = os.getenv("LAVALINK_PASSWORD")
+    secure = os.getenv("LAVALINK_SECURE") == "true"
+
+    print("HOST:", host)
+    print("PORT:", port)
+    print("PASS:", password)
+    print("SECURE:", secure)
+
+    protocolo = "https" if secure else "http"
+    uri = f"{protocolo}://{host}:{port}"
+
+    print("URI:", uri)
+
     node = wavelink.Node(
-        uri=f"{'https' if os.getenv('LAVALINK_SECURE') == 'true' else 'http'}://{os.getenv('LAVALINK_HOST')}:{os.getenv('LAVALINK_PORT')}",
-        password=os.getenv("LAVALINK_PASSWORD")
+        uri=uri,
+        password=password
     )
 
     await wavelink.Pool.connect(
