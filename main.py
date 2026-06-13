@@ -34,55 +34,6 @@ async def on_ready():
     print("✅ Ligado ao Lavalink!")
 
 
-class MusicButtons(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Pause", emoji="⏸️", style=discord.ButtonStyle.secondary)
-    async def pause_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player: wavelink.Player = interaction.guild.voice_client
-
-        if not player:
-            await interaction.response.send_message("❌ Não estou num canal de voz.", ephemeral=True)
-            return
-
-        await player.pause(True)
-        await interaction.response.send_message("⏸️ Música pausada.", ephemeral=True)
-
-    @discord.ui.button(label="Resume", emoji="▶️", style=discord.ButtonStyle.success)
-    async def resume_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player: wavelink.Player = interaction.guild.voice_client
-
-        if not player:
-            await interaction.response.send_message("❌ Não estou num canal de voz.", ephemeral=True)
-            return
-
-        await player.pause(False)
-        await interaction.response.send_message("▶️ Música retomada.", ephemeral=True)
-
-    @discord.ui.button(label="Stop", emoji="⏹️", style=discord.ButtonStyle.danger)
-    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player: wavelink.Player = interaction.guild.voice_client
-
-        if not player:
-            await interaction.response.send_message("❌ Não estou num canal de voz.", ephemeral=True)
-            return
-
-        await player.stop()
-        await interaction.response.send_message("⏹️ Música parada.", ephemeral=True)
-
-    @discord.ui.button(label="Leave", emoji="👋", style=discord.ButtonStyle.secondary)
-    async def leave_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        player: wavelink.Player = interaction.guild.voice_client
-
-        if not player:
-            await interaction.response.send_message("❌ Não estou num canal de voz.", ephemeral=True)
-            return
-
-        await player.disconnect()
-        await interaction.response.send_message("👋 Saí do canal de voz.", ephemeral=True)
-
-
 @bot.command()
 async def ping(ctx):
     await ctx.send("🏓 Pong!")
@@ -142,38 +93,7 @@ async def play(ctx, *, query: str):
         track = tracks[0]
 
     await player.play(track)
-
-    embed = discord.Embed(
-        title="🎵 A tocar agora",
-        description=f"**{track.title}**",
-        color=discord.Color.blurple()
-    )
-
-    await ctx.send(embed=embed, view=MusicButtons())
-
-
-@bot.command()
-async def pause(ctx):
-    player: wavelink.Player = ctx.voice_client
-
-    if not player:
-        await ctx.send("❌ Não estou num canal de voz.")
-        return
-
-    await player.pause(True)
-    await ctx.send("⏸️ Música pausada.")
-
-
-@bot.command()
-async def resume(ctx):
-    player: wavelink.Player = ctx.voice_client
-
-    if not player:
-        await ctx.send("❌ Não estou num canal de voz.")
-        return
-
-    await player.pause(False)
-    await ctx.send("▶️ Música retomada.")
+    await ctx.send(f"🎵 A tocar agora: **{track.title}**")
 
 
 @bot.command()
