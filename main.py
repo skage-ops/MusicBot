@@ -22,17 +22,13 @@ async def on_ready():
     protocolo = "https" if secure else "http"
     uri = f"{protocolo}://{host}:{port}"
 
-    node = wavelink.Node(
-        uri=uri,
-        password=password
-    )
+    node = wavelink.Node(uri=uri, password=password)
 
-    await wavelink.Pool.connect(
-        client=bot,
-        nodes=[node]
-    )
-
-    print("✅ Ligado ao Lavalink!")
+    try:
+        await wavelink.Pool.connect(client=bot, nodes=[node])
+        print("✅ Ligado ao Lavalink!")
+    except Exception as erro:
+        print(f"❌ Erro ao ligar ao Lavalink: {erro}")
 
 
 @bot.command()
@@ -51,12 +47,18 @@ async def join(ctx):
     if ctx.voice_client:
         await ctx.voice_client.move_to(canal)
     else:
-        await canal.connect(
-            self_deaf=True,
-            timeout=60
-        )
+        await canal.connect(self_deaf=True, timeout=60)
 
     await ctx.send(f"🔊 Entrei em **{canal.name}**")
+
+
+@bot.command()
+async def leave(ctx):
+    if ctx.voice_client:
+        await ctx.voice_client.disconnect()
+        await ctx.send("👋 Saí do canal de voz.")
+    else:
+        await ctx.send("❌ Não estou em nenhum canal de voz.")
 
 
 @bot.command()
@@ -66,13 +68,7 @@ async def play(ctx, *, search: str):
         return
 
     if ctx.voice_client is None:
-        player: wavelink.Player = await ctx.author.voice.channel.connect(
-            cls=wavelink.Player,
-            self_deaf=True,
-            timeout=60
-        )
-    else:
-        player: wavelink.Player = ctx.voice_client
+        await ctx.author.voice.channel.connect(self_deaf=True, timeout=60)
 
     try:
         if "open.spotify.com" in search:
@@ -88,15 +84,14 @@ async def play(ctx, *, search: str):
 
         if isinstance(tracks, wavelink.Playlist):
             track = tracks.tracks[0]
-            await player.play(track)
-            await ctx.send(
-                f"🎵 A tocar playlist: **{tracks.name}**\n"
-                f"▶️ Primeira música: **{track.title}**"
-            )
         else:
             track = tracks[0]
-            await player.play(track)
-            await ctx.send(f"🎵 A tocar agora: **{track.title}**")
+
+        player = ctx.voice_client
+
+        await player.play(track)
+
+        await ctx.send(f"🎵 A tocar agora: **{track.title}**")
 
     except Exception as erro:
         await ctx.send(f"❌ Erro ao tocar música: `{erro}`")
@@ -105,62 +100,62 @@ async def play(ctx, *, search: str):
 
 @bot.command()
 async def pause(ctx):
-    player: wavelink.Player = ctx.voice_client
+    player = ctx.voice_client
 
     if not player:
         await ctx.send("❌ Não estou num canal de voz.")
         return
 
-    await player.pause(True)
-    await ctx.send("⏸️ Música pausada.")
+    if hasattr(player, "pause"):
+        await player.pause(True)
+        await ctx.send("⏸️ Música pausada.")
+    else:
+        await ctx.send("❌ Este player não suporta pause neste modo.")
 
 
 @bot.command()
 async def resume(ctx):
-    player: wavelink.Player = ctx.voice_client
+    player = ctx.voice_client
 
     if not player:
         await ctx.send("❌ Não estou num canal de voz.")
         return
 
-    await player.pause(False)
-    await ctx.send("▶️ Música retomada.")
+    if hasattr(player, "pause"):
+        await player.pause(False)
+        await ctx.send("▶️ Música retomada.")
+    else:
+        await ctx.send("❌ Este player não suporta resume neste modo.")
 
 
 @bot.command()
 async def stop(ctx):
-    player: wavelink.Player = ctx.voice_client
+    player = ctx.voice_client
 
     if not player:
         await ctx.send("❌ Não estou num canal de voz.")
         return
 
-    await player.stop()
-    await ctx.send("⏹️ Música parada.")
+    if hasattr(player, "stop"):
+        await player.stop()
+        await ctx.send("⏹️ Música parada.")
+    else:
+        await ctx.send("❌ Este player não suporta stop neste modo.")
 
 
 @bot.command()
 async def skip(ctx):
-    player: wavelink.Player = ctx.voice_client
+    player = ctx.voice_client
 
     if not player:
         await ctx.send("❌ Não estou num canal de voz.")
         return
 
-    await player.stop()
-    await ctx.send("⏭️ Música saltada.")
-
-
-@bot.command()
-async def leave(ctx):
-    player: wavelink.Player = ctx.voice_client
-
-    if not player:
-        await ctx.send("❌ Não estou num canal de voz.")
-        return
-
-    await player.disconnect()
-    await ctx.send("👋 Saí do canal de voz.")
+    if hasattr(player, "stop"):
+        await player.stop()
+        await ctx.send("⏭️ Música saltada.")
+    else:
+        await ctx.send("❌ Este player não suporta skip neste modo.")
 
 
 bot.run(os.getenv("DISCORD_TOKEN"))
