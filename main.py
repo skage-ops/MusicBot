@@ -52,7 +52,6 @@ async def join(ctx):
         await ctx.voice_client.move_to(canal)
     else:
         await canal.connect(
-            cls=wavelink.Player,
             self_deaf=True,
             timeout=60
         )
