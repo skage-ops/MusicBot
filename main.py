@@ -8,15 +8,22 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-
 @bot.event
 async def on_ready():
     print(f"{bot.user} está online!")
-
 
 @bot.command()
 async def ping(ctx):
     await ctx.send("🏓 Pong!")
 
+@bot.command()
+async def join(ctx):
+    if ctx.author.voice is None:
+        await ctx.send("❌ Tens de estar num canal de voz.")
+        return
+
+    canal = ctx.author.voice.channel
+    await canal.connect()
+    await ctx.send(f"🔊 Entrei em {canal.name}")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
