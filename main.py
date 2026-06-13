@@ -45,9 +45,13 @@ async def join(ctx):
     canal = ctx.author.voice.channel
 
     if ctx.voice_client:
-        await ctx.voice_client.move_to(canal)
-    else:
-        await canal.connect(self_deaf=True, timeout=60)
+        await ctx.voice_client.disconnect()
+
+    await canal.connect(
+        cls=wavelink.Player,
+        self_deaf=True,
+        timeout=60
+    )
 
     await ctx.send(f"🔊 Entrei em **{canal.name}**")
 
@@ -68,7 +72,13 @@ async def play(ctx, *, search: str):
         return
 
     if ctx.voice_client is None:
-        await ctx.author.voice.channel.connect(self_deaf=True, timeout=60)
+    player: wavelink.Player = await ctx.author.voice.channel.connect(
+        cls=wavelink.Player,
+        self_deaf=True,
+        timeout=60
+    )
+else:
+    player: wavelink.Player = ctx.voice_client
 
     try:
         if "open.spotify.com" in search:
