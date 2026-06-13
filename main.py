@@ -19,15 +19,8 @@ async def on_ready():
     password = os.getenv("LAVALINK_PASSWORD")
     secure = os.getenv("LAVALINK_SECURE") == "true"
 
-    print("HOST:", host)
-    print("PORT:", port)
-    print("PASS:", password)
-    print("SECURE:", secure)
-
     protocolo = "https" if secure else "http"
     uri = f"{protocolo}://{host}:{port}"
-
-    print("URI:", uri)
 
     node = wavelink.Node(
         uri=uri,
@@ -59,10 +52,10 @@ async def join(ctx):
         await ctx.voice_client.move_to(canal)
     else:
         await canal.connect(
-             cls=wavelink.Player,
-             self_deaf=True,
-             timeout=60
-    )
+            cls=wavelink.Player,
+            self_deaf=True,
+            timeout=60
+        )
 
     await ctx.send(f"🔊 Entrei em **{canal.name}**")
 
@@ -75,24 +68,40 @@ async def play(ctx, *, search: str):
 
     if ctx.voice_client is None:
         player: wavelink.Player = await ctx.author.voice.channel.connect(
-    cls=wavelink.Player,
-    self_deaf=True,
-    timeout=60
-)
+            cls=wavelink.Player,
+            self_deaf=True,
+            timeout=60
+        )
     else:
         player: wavelink.Player = ctx.voice_client
 
-    tracks = await wavelink.Playable.search(search)
+    try:
+        if "open.spotify.com" in search:
+            tracks = await wavelink.Playable.search(search)
+        elif "youtube.com" in search or "youtu.be" in search:
+            tracks = await wavelink.Playable.search(search)
+        else:
+            tracks = await wavelink.Playable.search(f"ytsearch:{search}")
 
-    if not tracks:
-        await ctx.send("❌ Não encontrei essa música.")
-        return
+        if not tracks:
+            await ctx.send("❌ Não encontrei essa música.")
+            return
 
-    track = tracks[0]
+        if isinstance(tracks, wavelink.Playlist):
+            track = tracks.tracks[0]
+            await player.play(track)
+            await ctx.send(
+                f"🎵 A tocar playlist: **{tracks.name}**\n"
+                f"▶️ Primeira música: **{track.title}**"
+            )
+        else:
+            track = tracks[0]
+            await player.play(track)
+            await ctx.send(f"🎵 A tocar agora: **{track.title}**")
 
-    await player.play(track)
-
-    await ctx.send(f"🎵 A tocar agora: **{track.title}**")
+    except Exception as erro:
+        await ctx.send(f"❌ Erro ao tocar música: `{erro}`")
+        print("ERRO PLAY:", erro)
 
 
 @bot.command()
